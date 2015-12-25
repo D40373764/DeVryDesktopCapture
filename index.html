@@ -1,0 +1,85 @@
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<title>DeVry Screen Sharing</title>
+
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<style>
+  body {
+    background: white;
+    display: -webkit-flex;
+    -webkit-justify-content: center;
+    -webkit-align-items: center;
+    -webkit-flex-direction: column;
+  }
+  video {
+    width: 480px;
+    height: 360px;
+    border: 1px solid #e2e2e2;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+  }
+  .to-bottom {
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    margin-bottom: 0;
+    -webkit-transition: height 0.5s;
+    transition: height 0.5s;
+  }
+  .to-bottom .alert {
+    margin-bottom: 0;
+  }
+  .call-list .list-group-item {
+    -webkit-transition: top 0.5s, opacity 0.5s linear;
+    transition: top 0.5s, opacity 0.5s linear;
+  }
+</style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="input-group">
+          <input type="text" class="form-control" id="username" placeholder="Enter your name here">
+          <span class="input-group-btn">
+            <button class="btn btn-default" id="calls" type="button">Show Caller List</button>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="list-group call-list">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="row">
+          <div class="col-md-12">
+            <video id="video" controls autoplay></video>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <button id="start" class="btn btn-primary">Select Screen</button>
+            <button id="stop" class="btn btn-primary">Stop Sharing</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row to-bottom">
+      <div class="alert alert-warning" role="alert">
+        <strong><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></strong> <span class="messageSpan">Welcome!</span>
+      </div>
+    </div>
+  </div>
+  <script src="js/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="WebRTCSocket.js"></script>
+  <script src="WebRTCController.js"></script>
+  <script src="WebRTCCallback.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
