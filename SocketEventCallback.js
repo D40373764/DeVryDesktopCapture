@@ -1,37 +1,22 @@
 'use strict';
 
-DeVry.SocketEventHandler.onOpen = function() {
-  //DeVry.SocketManager.send({type:'calls'});
-}
+var myCallbacks = {};
 
-DeVry.SocketEventHandler.onError = function(error) {
+myCallbacks.onOpen  = function() {}
+myCallbacks.onCall  = function(data) {}
+myCallbacks.onOffer = function(data) {}
+myCallbacks.onLeave = function(data) {}
+myCallbacks.onError = function(error) {
   updateMessage(error);
 }
-
-DeVry.SocketEventHandler.onCall = function(data) {}
-
-DeVry.SocketEventHandler.onJoin = function(data) {
+myCallbacks.onJoin = function(data) {
   if (data.success === false) {
     updateMessage("Login unsuccessful, please try a different name.");
   } else {
     updateMessage("Join successful.");
   }
 }
-
-DeVry.SocketEventHandler.onOffer = function(data) {}
-
-DeVry.SocketEventHandler.onAnswer = function(data) {
-  screenController.peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-}
-
-DeVry.SocketEventHandler.onCandidate = function(data) {
-  screenController.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-}
-
-DeVry.SocketEventHandler.onLeave = function(data) {
-}
-
-DeVry.SocketEventHandler.showCalls = function(data) {
+myCallbacks.showCalls = function(data) {
   console.log(data);
   $('.call-list').empty();
   updateMessage(data.value.length + ' call');
@@ -51,7 +36,6 @@ DeVry.SocketEventHandler.showCalls = function(data) {
     }
   });
 }
-
-DeVry.SocketEventHandler.onDefault = function(data) {
+myCallbacks.onDefault = function(data) {
   console.log(data);
 }

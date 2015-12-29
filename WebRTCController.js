@@ -13,20 +13,21 @@ function hasRTCPeerConnection() {
   return !!(window.RTCPeerConnection);
 }
 
-function WebRTCController() {
-  if (!(this instanceof WebRTCController)) {
-    return new WebRTCController();
+DeVry.WebRTCController = function (socket) {
+  if (!(this instanceof DeVry.WebRTCController)) {
+    return new DeVry.WebRTCController();
   }
   this.video          = undefined;
   this.username       = undefined;
   this.callerId       = undefined;
   this.stream         = undefined;
   this.peerConnection = undefined;
+  this.socket         = socket;
   this.iceServers     = [{ "url": "stun:127.0.0.1:9876" }];
   this.configuration  = { "iceServers": this.iceServers };
 }
 
-WebRTCController.prototype.startScreenConnection = function(screenConstraints, video) {
+DeVry.WebRTCController.prototype.startScreenConnection = function(screenConstraints, video) {
   this.video = video;
 
   if (hasUserMedia() && hasRTCPeerConnection()) {
@@ -36,7 +37,7 @@ WebRTCController.prototype.startScreenConnection = function(screenConstraints, v
   }
 }
 
-WebRTCController.prototype.successScreenCallback = function(stream) {
+DeVry.WebRTCController.prototype.successScreenCallback = function(stream) {
   var self = this;
   self.stream = stream;
   self.video.src = URL.createObjectURL(stream);
@@ -48,7 +49,7 @@ WebRTCController.prototype.successScreenCallback = function(stream) {
 
   self.peerConnection.onicecandidate = function(event) {
     if (event.candidate) {
-      DeVry.SocketManager.send({
+      self.socket.send({
         type: "candidate",
         channel: "screen",
         candidate: event.candidate
@@ -60,7 +61,7 @@ WebRTCController.prototype.successScreenCallback = function(stream) {
   self.peerConnection.addStream(stream);
 
   self.peerConnection.createOffer(function(sessionDescription) {
-    DeVry.SocketManager.send({
+    self.socket.send({
       type: "offer",
       channel: "screen",
       offer: sessionDescription
@@ -71,11 +72,11 @@ WebRTCController.prototype.successScreenCallback = function(stream) {
   });
 }
 
-WebRTCController.prototype.errorCallback = function(error) {
+DeVry.WebRTCController.prototype.errorCallback = function(error) {
   this.sendMessage(false, "getUserMedia error: ", error);
 }
 
-WebRTCController.prototype.closePeerConnection = function() {
+DeVry.WebRTCController.prototype.closePeerConnection = function() {
   if (this.peerConnection != null) {
     this.peerConnection.close();
     this.peerConnection.onicecandidate = null;
@@ -83,7 +84,7 @@ WebRTCController.prototype.closePeerConnection = function() {
   }
 }
 
-WebRTCController.prototype.sendMessage = function (success, message) {
+DeVry.WebRTCController.prototype.sendMessage = function (success, message) {
   var event = new CustomEvent(
     "webrtcMessageEvent",
     {

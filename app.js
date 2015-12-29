@@ -1,9 +1,14 @@
 'use strict';
 
 const DESKTOP_MEDIA = ['screen', 'window'];
+//const url = 'wss://d40373764.dvuadmin.net:8443';
+const url = 'wss://192.168.1.6:8443';
 
 var pending_request_id = null;
-var screenController = new WebRTCController();
+var socketManager = new DeVry.SocketManager();
+var screenController = new DeVry.WebRTCController(socketManager);
+var socketEventHandler = new DeVry.SocketEventHandler(screenController, myCallbacks);
+socketManager.connect(url, socketEventHandler);
 
 // Launch the chooseDesktopMedia().
 document.querySelector('#start').addEventListener('click', function(event) {
@@ -27,20 +32,19 @@ document.querySelector('#calls').addEventListener('click', function(event) {
   if (username.length == 0) {
     updateMessage("Please enter your name.");
   } else {
-    DeVry.SocketManager.getCallerIDs(username);
-    //DeVry.SocketManager.send({'username':username, 'type':'calls'});
+    socketManager.getCallerIDs(username);
     $('#calls').text('Refresh Caller List');
   }
 });
 
 function join(callerId) {
   var username = $('#username').val();
-  DeVry.SocketManager.joinCall(username, callerId);
+  socketManager.joinCall(username, callerId);
 }
 
 function leave(callerId) {
   var username = $('#username').val();
-  DeVry.SocketManager.leaveCall(username, callerId);
+  socketManager.leaveCall(username, callerId);
   updateMessage("Ready to join a new call.");
 }
 
@@ -69,10 +73,6 @@ function onAccessApproved(id) {
   }, document.querySelector('#video'));
 }
 
-function getUserMediaError(error) {
-  console.log('navigator.webkitGetUserMedia() errot: ', error);
-}
-
 function updateMessage(message) {
   var height = '10%';
   $('.to-bottom').height('0');
@@ -92,14 +92,10 @@ function disappear(items) {
   });
 }
 
-chrome.runtime.onMessageExternal.addListener(function(request, sender, sendResponse) {
-  console.log(request);
-});
-
-//var url = 'wss://d40373764.dvuadmin.net:8443';
-var url = 'wss://192.168.1.6:8443';
-DeVry.SocketManager.connect(url, DeVry.SocketEventHandler);
-
 document.addEventListener("webrtcMessageEvent", function(e) {
   updateMessage(e.detail.message);
 }, false);
+
+chrome.runtime.onMessageExternal.addListener(function(request, sender, sendResponse) {
+  console.log(request);
+});

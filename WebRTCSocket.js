@@ -1,128 +1,145 @@
 'use strict';
 
-var DeVry = {};
+var DeVry = DeVry || {};
 
-DeVry.SocketEventHandler = {
-  onOpen:       undefined,
-  onError:      undefined,
-  onCall:       undefined,
-  onJoin:       undefined,
-  onOffer:      undefined,
-  onAnswer:     undefined,
-  onCandidate:  undefined,
-  onLeave:      undefined,
-  showCalls:    undefined,
-  onDefault:    undefined,
+DeVry.SocketEventHandler = function (webRTCController, callbacks) {
+  if (!(this instanceof DeVry.SocketEventHandler)) {
+    return new DeVry.SocketEventHandler(webRTCController, callbacks);
+  }
+  if (typeof webRTCController === 'undefined' || typeof callbacks === 'undefined' ) {
+    return;
+  }
+  this.webRTCController = webRTCController;
+  this.onOpen           = callbacks.onOpen || function() {};
+  this.onCall           = callbacks.onCall || function() {};
+  this.onJoin           = callbacks.onJoin || function() {};
+  this.onOffer          = callbacks.onOffer || function() {};
+  this.onError          = callbacks.onError || function() {};
+  this.onLeave          = callbacks.onLeave || function() {};
+  this.showCalls        = callbacks.showCalls || function() {};
+  this.onDefault        = callbacks.onDefault || function() {};
+  this.onAnswer         = function(data) {
+    this.webRTCController.peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+  };
+  this.onCandidate      = function(data) {
+    this.webRTCController.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+  };
+}
 
-  onMessage: function(data) {
+DeVry.SocketEventHandler.prototype.onMessage = function(data) {
     switch(data.type) {
       case 'call':
-        DeVry.SocketEventHandler.onCall(data);
+        this.onCall(data);
         break;
       case 'join':
-        DeVry.SocketEventHandler.onJoin(data);
+        this.onJoin(data);
         break;
       case 'offer':
-        DeVry.SocketEventHandler.onOffer(data);
+        this.onOffer(data);
         break;
       case 'answer':
-        DeVry.SocketEventHandler.onAnswer(data);
+        this.onAnswer(data);
         break;
       case 'candidate':
-        DeVry.SocketEventHandler.onCandidate(data);
+        this.onCandidate(data);
         break;
       case 'leave':
-        DeVry.SocketEventHandler.onLeave();
+        this.onLeave();
         break;
       case 'error':
-        DeVry.SocketEventHandler.onError(data);
+        this.onError(data);
         break;
       case 'calls':
-        DeVry.SocketEventHandler.showCalls(data);
+        this.showCalls(data);
         break;
       default:
-        DeVry.SocketEventHandler.onDefault(data);
+        this.onDefault(data);
     }
-  }
-};
+}
 
-DeVry.SocketManager = {
-  username: undefined,
-  callerId: undefined,
-  socket:   undefined,
-
-  connect: function(url, callbackHandler) {
-
-    var socket = new WebSocket(url);
-
-    socket.onopen = function() {
-      console.log("Signaling Server Connected.");
-      //callback();
-      callbackHandler.onOpen();
-    };
-
-    socket.onmessage = function(message) {
-      console.log("Got message: ", message.data);
-
-      var data = JSON.parse(message.data);
-
-      if (data.type === 'call') {
-        DeVry.SocketManager.callerId = data.callerId;
-      }
-      callbackHandler.onMessage(data);
-    };
-
-    socket.onerror = function(error) {
-      callbackHandler.onError("Failed when communicating with WebSocket server.");
-    };
-
-    DeVry.SocketManager.socket = socket;
-  },
-  makeCall: function(username) {
-    DeVry.SocketManager.send({
-      type: "call",
-      username: username,
-    });
-
-    DeVry.SocketManager.username = username;
-  },
-  getCallerIDs: function(username) {
-    DeVry.SocketManager.send({
-      type: "calls",
-      username: username,
-    });
-  },
-  joinCall: function(username, callerId) {
-    DeVry.SocketManager.send({
-      type: "join",
-      username: username,
-      callerId: callerId
-    });
-
-    DeVry.SocketManager.username = username;
-    DeVry.SocketManager.callerId = callerId;
-  },
-  leaveCall: function(username, callerId) {
-    DeVry.SocketManager.send({
-      type: "leave",
-      username: username,
-      callerId: callerId
-    });
-
-    DeVry.SocketManager.username = '';
-    DeVry.SocketManager.callerId = '';
-  },
-  send: function(message) {
-    var username = DeVry.SocketManager.username;
-    var callerId = DeVry.SocketManager.callerId;
-
-    if (username !== undefined && username.length > 0) {
-      message.username = DeVry.SocketManager.username;
-    }
-    if (callerId !== undefined && callerId.length > 0) {
-      message.callerId = callerId;
-    }
-    DeVry.SocketManager.socket.send(JSON.stringify(message));
+DeVry.SocketManager = function () {
+  if (!(this instanceof DeVry.SocketManager)) {
+    return new DeVry.SocketManager();
   }
 
-};
+  this.username = undefined;
+  this.callerId = undefined;
+  this.socket   = undefined;
+}
+
+DeVry.SocketManager.prototype.connect = function(url, callbackHandler) {
+
+  this.socket = new WebSocket(url);
+
+  this.socket.onopen = function() {
+    console.log("Signaling Server Connected.");
+    //callback();
+    callbackHandler.onOpen();
+  };
+
+  this.socket.onmessage = function(message) {
+    console.log("Got message: ", message.data);
+
+    var data = JSON.parse(message.data);
+
+    if (data.type === 'call') {
+      DeVry.SocketManager.callerId = data.callerId;
+    }
+    callbackHandler.onMessage(data);
+  };
+
+  this.socket.onerror = function(error) {
+    callbackHandler.onError("Failed when communicating with WebSocket server.");
+  };
+}
+
+DeVry.SocketManager.prototype.makeCall = function(username) {
+  this.send({
+    type: "call",
+    username: username,
+  });
+
+  this.username = username;
+}
+
+DeVry.SocketManager.prototype.getCallerIDs = function(username) {
+  this.send({
+    type: "calls",
+    username: username,
+  });
+}
+
+DeVry.SocketManager.prototype.joinCall = function(username, callerId) {
+  this.send({
+    type: "join",
+    username: username,
+    callerId: callerId
+  });
+
+  this.username = username;
+  this.callerId = callerId;
+}
+
+DeVry.SocketManager.prototype.leaveCall = function(username, callerId) {
+  this.send({
+    type: "leave",
+    username: username,
+    callerId: callerId
+  });
+
+  this.username = '';
+  this.callerId = '';
+}
+
+DeVry.SocketManager.prototype.send = function(message) {
+  var username = this.username;
+  var callerId = this.callerId;
+
+  if (username !== undefined && username.length > 0) {
+    message.username = username;
+  }
+  if (callerId !== undefined && callerId.length > 0) {
+    message.callerId = callerId;
+  }
+  this.socket.send(JSON.stringify(message));
+}
