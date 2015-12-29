@@ -86,6 +86,12 @@ DeVry.SocketManager = {
 
     DeVry.SocketManager.username = username;
   },
+  getCallerIDs: function(username) {
+    DeVry.SocketManager.send({
+      type: "calls",
+      username: username,
+    });
+  },
   joinCall: function(username, callerId) {
     DeVry.SocketManager.send({
       type: "join",

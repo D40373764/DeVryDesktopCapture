@@ -16,7 +16,7 @@ document.querySelector('#stop').addEventListener('click', function(event) {
     chrome.desktopCapture.cancelChooseDesktopMedia(pending_request_id);
     screenController.closePeerConnection();
     document.querySelector('#video').src = '';
-    document.querySelector('#video').style.webkitFilter="brightness(0)";
+    //document.querySelector('#video').style.webkitFilter="brightness(0)";
   }
   updateMessage("Screen sharing stopped.");
 });
@@ -27,7 +27,8 @@ document.querySelector('#calls').addEventListener('click', function(event) {
   if (username.length == 0) {
     updateMessage("Please enter your name.");
   } else {
-    DeVry.SocketManager.send({'username':username, 'type':'calls'});
+    DeVry.SocketManager.getCallerIDs(username);
+    //DeVry.SocketManager.send({'username':username, 'type':'calls'});
     $('#calls').text('Refresh Caller List');
   }
 });
@@ -46,7 +47,7 @@ function leave(callerId) {
 // Launch webkitGetUserMedia() based on selected media id.
 function onAccessApproved(id) {
   if (!id) {
-    console.log('Access rejected.');
+    updateMessage("Access rejected.");
     return;
   }
 

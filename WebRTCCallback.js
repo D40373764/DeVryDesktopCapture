@@ -12,7 +12,7 @@ DeVry.SocketEventHandler.onCall = function(data) {}
 
 DeVry.SocketEventHandler.onJoin = function(data) {
   if (data.success === false) {
-    alert("Login unsuccessful, please try a different name.");
+    updateMessage("Login unsuccessful, please try a different name.");
   } else {
     updateMessage("Join successful.");
   }
