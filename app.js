@@ -3,6 +3,7 @@
 const DESKTOP_MEDIA = ['screen', 'window'];
 
 var pending_request_id = null;
+var screenController = new WebRTCController();
 
 // Launch the chooseDesktopMedia().
 document.querySelector('#start').addEventListener('click', function(event) {
@@ -13,8 +14,9 @@ document.querySelector('#start').addEventListener('click', function(event) {
 document.querySelector('#stop').addEventListener('click', function(event) {
   if (pending_request_id != null) {
     chrome.desktopCapture.cancelChooseDesktopMedia(pending_request_id);
-    //document.querySelector('#video').style.webkitFilter="brightness(0)";
-    WebRTCController.closePeerConnection();
+    screenController.closePeerConnection();
+    document.querySelector('#video').src = '';
+    document.querySelector('#video').style.webkitFilter="brightness(0)";
   }
   updateMessage("Screen sharing stopped.");
 });
@@ -48,7 +50,7 @@ function onAccessApproved(id) {
     return;
   }
 
-  WebRTCController.startScreenConnection({
+  screenController.startScreenConnection({
     audio:{
       mandatory: {
         chromeMediaSource: 'desktop',
@@ -71,7 +73,7 @@ function getUserMediaError(error) {
 }
 
 function updateMessage(message) {
-  var height = $('.to-bottom').height();
+  var height = '10%';
   $('.to-bottom').height('0');
   setTimeout(function() {
     $('.messageSpan').text(message);
@@ -93,5 +95,10 @@ chrome.runtime.onMessageExternal.addListener(function(request, sender, sendRespo
   console.log(request);
 });
 
-var url = 'wss://d40373764.dvuadmin.net:8443';
+//var url = 'wss://d40373764.dvuadmin.net:8443';
+var url = 'wss://192.168.1.6:8443';
 DeVry.SocketManager.connect(url, DeVry.SocketEventHandler);
+
+document.addEventListener("webrtcMessageEvent", function(e) {
+  updateMessage(e.detail.message);
+}, false);

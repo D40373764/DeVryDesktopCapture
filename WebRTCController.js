@@ -13,69 +13,87 @@ function hasRTCPeerConnection() {
   return !!(window.RTCPeerConnection);
 }
 
-var WebRTCController = {
-  localVideo           : undefined,
-  username             : undefined,
-  callerId             : undefined,
-  screenStream         : undefined,
-  peerConnection       : undefined,
-  iceServers           : [{ "url": "stun:127.0.0.1:9876" }],
-  configuration        : { "iceServers": this.iceServers }
+function WebRTCController() {
+  if (!(this instanceof WebRTCController)) {
+    return new WebRTCController();
+  }
+  this.video          = undefined;
+  this.username       = undefined;
+  this.callerId       = undefined;
+  this.stream         = undefined;
+  this.peerConnection = undefined;
+  this.iceServers     = [{ "url": "stun:127.0.0.1:9876" }];
+  this.configuration  = { "iceServers": this.iceServers };
 }
 
-WebRTCController.startScreenConnection = function(screenConstraints, localVideo) {
-  WebRTCController.localVideo = localVideo;
+WebRTCController.prototype.startScreenConnection = function(screenConstraints, video) {
+  this.video = video;
 
   if (hasUserMedia() && hasRTCPeerConnection()) {
-    navigator.getUserMedia(screenConstraints, this.successScreenCallback, this.errorCallback);
+    navigator.getUserMedia(screenConstraints, this.successScreenCallback.bind(this), this.errorCallback.bind(this));
   } else {
-    alert("Your browser does not support WebRTC.")
+    this.sendMessage(false, "Your browser does not support WebRTC.");
   }
 }
 
-WebRTCController.successScreenCallback = function(stream) {
+WebRTCController.prototype.successScreenCallback = function(stream) {
+  var self = this;
+  self.stream = stream;
+  self.video.src = URL.createObjectURL(stream);
+  stream.onended = function() {
+    self.sendMessage(true, "Video ended.");
+  };
 
-  WebRTCController.screenStream = stream;
-  WebRTCController.localVideo.src = URL.createObjectURL(stream);
-  stream.onended = function() { console.log('Ended'); };
+  self.peerConnection = new RTCPeerConnection(self.configuration);
 
-  var peerConnection = new RTCPeerConnection(WebRTCController.configuration);
-  WebRTCController.peerConnection = peerConnection;
-
-  peerConnection.onicecandidate = function(event) {
+  self.peerConnection.onicecandidate = function(event) {
     if (event.candidate) {
       DeVry.SocketManager.send({
         type: "candidate",
         channel: "screen",
         candidate: event.candidate
       });
-      updateMessage('Sharing...');
+      self.sendMessage(true, "Sharing...");
     }
   }
 
-  peerConnection.addStream(stream);
+  self.peerConnection.addStream(stream);
 
-  peerConnection.createOffer(function(sessionDescription) {
+  self.peerConnection.createOffer(function(sessionDescription) {
     DeVry.SocketManager.send({
       type: "offer",
       channel: "screen",
       offer: sessionDescription
     });
-    WebRTCController.peerConnection.setLocalDescription(sessionDescription);
+    self.peerConnection.setLocalDescription(sessionDescription);
   }, function(error) {
-    console.log("Failed to create offer.");
+    self.sendMessage(false, "Failed to create offer.");
   });
-
 }
 
-WebRTCController.errorCallback = function(error) {
-  console.log("getUserMedia error: ", error);
+WebRTCController.prototype.errorCallback = function(error) {
+  this.sendMessage(false, "getUserMedia error: ", error);
 }
 
-WebRTCController.closePeerConnection = function() {
-  if (WebRTCController.peerConnection != null) {
-    WebRTCController.peerConnection.close();
-    WebRTCController.peerConnection.onicecandidate = null;
-    WebRTCController.peerConnection.onaddstream = null;
+WebRTCController.prototype.closePeerConnection = function() {
+  if (this.peerConnection != null) {
+    this.peerConnection.close();
+    this.peerConnection.onicecandidate = null;
+    this.peerConnection.onaddstream = null;
   }
+}
+
+WebRTCController.prototype.sendMessage = function (success, message) {
+  var event = new CustomEvent(
+    "webrtcMessageEvent",
+    {
+      detail: {
+        success: success,
+        message: message
+      },
+      bubbles: true,
+      cancelable: true
+    }
+  );
+  document.dispatchEvent(event);
 }

@@ -5,14 +5,7 @@ DeVry.SocketEventHandler.onOpen = function() {
 }
 
 DeVry.SocketEventHandler.onError = function(error) {
-  var layerMessage = new Layer({
-    name: 'error',
-    shadowX: 10,
-    shadowY: 10,
-    html: 'Failed to connect to the server'
-  });
-  layerMessage.center();
-  layerMessage.bringToFront()
+  updateMessage(error);
 }
 
 DeVry.SocketEventHandler.onCall = function(data) {}
@@ -28,11 +21,11 @@ DeVry.SocketEventHandler.onJoin = function(data) {
 DeVry.SocketEventHandler.onOffer = function(data) {}
 
 DeVry.SocketEventHandler.onAnswer = function(data) {
-  WebRTCController.peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+  screenController.peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
 }
 
 DeVry.SocketEventHandler.onCandidate = function(data) {
-  WebRTCController.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+  screenController.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
 }
 
 DeVry.SocketEventHandler.onLeave = function(data) {

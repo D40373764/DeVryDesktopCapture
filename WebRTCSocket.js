@@ -52,6 +52,7 @@ DeVry.SocketManager = {
   socket:   undefined,
 
   connect: function(url, callbackHandler) {
+
     var socket = new WebSocket(url);
 
     socket.onopen = function() {
@@ -72,8 +73,7 @@ DeVry.SocketManager = {
     };
 
     socket.onerror = function(error) {
-      console.log("Got error", error);
-      callbackHandler.onError(error);
+      callbackHandler.onError("Failed when communicating with WebSocket server.");
     };
 
     DeVry.SocketManager.socket = socket;
