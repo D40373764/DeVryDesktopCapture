@@ -15,7 +15,9 @@ DeVry.SocketEventHandler = function (webRTCController, callbacks) {
   this.onJoin           = callbacks.onJoin || function() {};
   this.onOffer          = callbacks.onOffer || function() {};
   this.onError          = callbacks.onError || function() {};
-  this.onLeave          = callbacks.onLeave || function() {};
+  this.onLeave          = function(data) {
+    callbacks.onLeave(data);
+  };
   this.showCalls        = callbacks.showCalls || function() {};
   this.onDefault        = callbacks.onDefault || function() {};
   this.onAnswer         = function(data) {
@@ -44,7 +46,7 @@ DeVry.SocketEventHandler.prototype.onMessage = function(data) {
         this.onCandidate(data);
         break;
       case 'leave':
-        this.onLeave();
+        this.onLeave(data);
         break;
       case 'error':
         this.onError(data);
@@ -67,7 +69,9 @@ DeVry.SocketManager = function () {
   this.socket   = undefined;
 }
 
-DeVry.SocketManager.prototype.connect = function(url, callbackHandler) {
+DeVry.SocketManager.prototype.connect = function(url, controller, myCallbacks) {
+
+  var callbackHandler = new DeVry.SocketEventHandler(controller, myCallbacks);
 
   this.socket = new WebSocket(url);
 
@@ -84,6 +88,9 @@ DeVry.SocketManager.prototype.connect = function(url, callbackHandler) {
 
     if (data.type === 'call') {
       DeVry.SocketManager.callerId = data.callerId;
+    }
+    else if (data.type === 'leave') {
+      DeVry.SocketManager.callerId = null;
     }
     callbackHandler.onMessage(data);
   };

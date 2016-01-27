@@ -1,14 +1,11 @@
 'use strict';
 
 const DESKTOP_MEDIA = ['screen', 'window'];
-//const url = 'wss://d40373764.dvuadmin.net:8443';
-const url = 'wss://192.168.1.6:8443';
+const url = 'wss://d40373764.dvuadmin.net:8443';
+//const url = 'wss://192.168.1.6:8443';
 
 var pending_request_id = null;
-var socketManager = new DeVry.SocketManager();
-var screenController = new DeVry.WebRTCController(socketManager);
-var socketEventHandler = new DeVry.SocketEventHandler(screenController, myCallbacks);
-socketManager.connect(url, socketEventHandler);
+var screenController = new DeVry.WebRTCController(url, myCallbacks);
 
 // Launch the chooseDesktopMedia().
 document.querySelector('#start').addEventListener('click', function(event) {
@@ -32,19 +29,19 @@ document.querySelector('#calls').addEventListener('click', function(event) {
   if (username.length == 0) {
     updateMessage("Please enter your name.");
   } else {
-    socketManager.getCallerIDs(username);
+    screenController.getCallerIDs(username);
     $('#calls').text('Refresh Caller List');
   }
 });
 
 function join(callerId) {
   var username = $('#username').val();
-  socketManager.joinCall(username, callerId);
+  screenController.joinCall(username, callerId);
 }
 
 function leave(callerId) {
   var username = $('#username').val();
-  socketManager.leaveCall(username, callerId);
+  screenController.leaveCall(username, callerId);
   updateMessage("Ready to join a new call.");
 }
 

@@ -13,7 +13,7 @@ function hasRTCPeerConnection() {
   return !!(window.RTCPeerConnection);
 }
 
-DeVry.WebRTCController = function (socket) {
+DeVry.WebRTCController = function (url, myCallbacks) {
   if (!(this instanceof DeVry.WebRTCController)) {
     return new DeVry.WebRTCController();
   }
@@ -22,9 +22,11 @@ DeVry.WebRTCController = function (socket) {
   this.callerId       = undefined;
   this.stream         = undefined;
   this.peerConnection = undefined;
-  this.socket         = socket;
   this.iceServers     = [{ "url": "stun:127.0.0.1:9876" }];
   this.configuration  = { "iceServers": this.iceServers };
+  this.socket         = new DeVry.SocketManager();
+
+  this.socket.connect(url, this, myCallbacks);
 }
 
 DeVry.WebRTCController.prototype.startScreenConnection = function(screenConstraints, video) {
@@ -97,4 +99,16 @@ DeVry.WebRTCController.prototype.sendMessage = function (success, message) {
     }
   );
   document.dispatchEvent(event);
+}
+
+DeVry.WebRTCController.prototype.getCallerIDs = function (username) {
+  this.socket.getCallerIDs(username);
+}
+
+DeVry.WebRTCController.prototype.joinCall = function (username, callerId) {
+  this.socket.joinCall(username, callerId);
+}
+
+DeVry.WebRTCController.prototype.leaveCall = function (username, callerId) {
+  this.socket.leaveCall(username, callerId);
 }
